@@ -48,19 +48,6 @@ function Deck(options={}) {
 }
 
 Deck.prototype = {
-  init: function() {
-    var deckToCreate = this.defaultOptions.decks;
-
-    this.opts = this._validatedUserOption();
-    this.cards = [];
-    this.dealtCards = [];
-
-    for (var d = this.opts.decks; d >= 1; d--)
-      this.createDeck();
-
-    console.log('%d Deck created. Boogie time %O', this.opts.decks, this.cards);
-  },
-
   defaultOptions: {
     decks: 1,
     jokers: 2,
@@ -80,6 +67,19 @@ Deck.prototype = {
   ],
   cardBack: '1F0A0',
 
+
+  init: function() {
+    var deckToCreate = this.defaultOptions.decks;
+
+    this.opts = this._validatedUserOption();
+    this.cards = [];
+    this.dealtCards = [];
+
+    for (var d = this.opts.decks; d >= 1; d--)
+      this.createDeck();
+
+    console.log('%d Deck created. Boogie time %O', this.opts.decks, this.cards);
+  },
 
   // Based on the Fisher-Yates (aka Knuth) Shuffle
   // source: https://bost.ocks.org/mike/shuffle/
@@ -164,30 +164,34 @@ Deck.prototype = {
 
   // VALIDATION: Validates user options to ensure valid. Reverts to default options where necessary.
   _validatedUserOption: function() {
-    console.log('Validating user options and forcing defualt where necessary!');
-    var validatedOptions = this.userOptions,
-        defOpts = this.defaultOptions;
+    var _this = this,
+        attrs = _.keys(this.userOptions),
+        defOpts = this.defaultOptions,
+        validatedOptions = this.userOptions;
 
-    console.log('User options BEFORE: ', validatedOptions)
-
-    // validate number of decks requested
-    if ('decks' in this.userOptions)
-      validatedOptions.decks = this._validatedDeck();
-
-    // validate number jokers requested
-    if ('jokers' in this.userOptions)
-      validatedOptions.jokers = this._validatedJoker()
-
-    // validate inc/exclusion of Knights
-    if ('excludeKnights' in this.userOptions)
-      validatedOptions.jokers = this._validatedKnight()
-
-    console.log('User options AFTER: ', validatedOptions)
+    // console.log('User options BEFORE: ', validatedOptions)
+    _.map(attrs, function(attr) {
+      var attrToValidate = '_validates' + _.capitalize(attr)
+      if (attrToValidate in _this)
+        validatedOptions[attr] = _this[attrToValidate]()
+    })
+    // console.log('User options AFTER: ', validatedOptions)
 
     return _.defaults(validatedOptions, defOpts);
   },
 
-  _validatedDeck: function() {
+  /*
+    Naming convention for user options validators
+      _validatesAttributeKeyHere
+
+    For instance:
+      opts = { foo: 'bar', somethingElse: 'baz' }
+
+    dynamic validator methods would be
+      _validatesFoo() ...
+      _validatesSomethingElse() ....
+  */
+  _validatesDecks: function() {
     var valid = this.userOptions.decks;
     console.log('... DECKS validation required')
     if (!(_.isNumber(this.userOptions.decks) && this.userOptions.decks > 0)) {
@@ -199,7 +203,7 @@ Deck.prototype = {
     return valid
   },
 
-  _validatedJoker: function() {
+  _validatesJokers: function() {
     var valid = this.userOptions.jokers
 
     console.log('... JOKERS validation required')
@@ -212,7 +216,7 @@ Deck.prototype = {
     return valid;
   },
 
-  _validatedKnight: function() {
+  _validatesExcludeKnights: function() {
     var valid = this.userOptions.excludeKnights
 
     console.log('... KNIGHTS validation required')
